@@ -30,17 +30,43 @@ def fetch_image(url):
         return None
 
 def extract_text(image):
-    reader = easyocr.Reader(['en'])
+    reader = easyocr.Reader(['en', 'ch_sim'])
     results = reader.readtext(image)
     return ' '.join([result[1] for result in results])
 
-openai.api_key = 'sk-proj-iny7Jne7gdnU75FVK2dMT3BlbkFJNShzyiYaBNuyJ6eo7z5w'
+openai.api_key = 'api key'
 
 def analyze_text_with_llm(text):
+    prompt = """
+    Analyze the following text for harmful content related to self-injury, eating disorders, or unauthentic weight loss product advice.
+    The text would be Chinese or English, or combined.
+    Please identify if the text contains any references or indications of the following:
+    - Self-harm actions or methods
+    - Negative body image or severe dieting behavior
+    - Encouragement of disordered eating habits
+    - Descriptions of self-injury or eating disorders
+    - Promotion of unofficial or unauthentic weight loss products
+
+    Provide reasoning for your decision.
+
+    Examples:
+    1. "I can't stop thinking about cutting myself." -> This text contains self-harm actions.
+    2. "I haven't eaten in three days to lose weight." -> This text indicates severe dieting behavior.
+    3. "I admire how thin they are; I wish I could be like that by skipping meals." -> This text encourages disordered eating habits.
+    4. "I feel like I'm too fat even though everyone says I'm thin." -> This text shows negative body image.
+    5. "Try this amazing weight loss pill that guarantees results in one week!" -> This text promotes unauthentic weight loss products.
+
+    Text to analyze:
+    """
+    prompt += text
+
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "system", "content": "Analyze the following text for harmful content related to self-injury or eating disorders."}, 
-                  {"role": "user", "content": text}]
+        messages=[
+            {"role": "system", "content": "You are an assistant that detects harmful content related to self-injury, eating disorders, or unauthentic weight loss product advice in provided texts. Your responses should be concise and specific, providing reasons for your decisions."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=250
     )
     return response['choices'][0]['message']['content']
 
